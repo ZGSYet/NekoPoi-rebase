@@ -51,17 +51,22 @@ tg_update "🛠 **Kernel Build Update**
 ⏳ **Status**: delok \`${DEVICE}_defconfig\`..."
 make O=out ARCH=arm64 ${DEVICE}_defconfig
 
-# 3. Step: Compiling (Ini tahap terlama)
+# 3. Step: Compiling
 tg_update "🛠 **Kernel Build Update**
 ⏳ **Status**: Sedang Kompilasi (Mengebut dengan Ninja 2T Olsam Motul... ⚡"
-make O=out ARCH=arm64 ${DEVICE}_defconfig
+
+BUILD_LOG="build.log"
+
+make O=out ARCH=arm64 ${DEVICE}_defconfig >> $BUILD_LOG 2>&1
+
 make -j$(nproc --all) \
     O=out \
     ARCH=arm64 \
     LLVM=1 \
     LLVM_IAS=1 \
     CROSS_COMPILE=aarch64-linux-gnu- \
-    CROSS_COMPILE_ARM32=arm-linux-gnueabi-
+    CROSS_COMPILE_ARM32=arm-linux-gnueabi- \
+    2>&1 | tee -a $BUILD_LOG
     
 kernel="out/arch/arm64/boot/Image.gz"
 dtbo="out/arch/arm64/boot/dtbo.img"
@@ -70,7 +75,13 @@ dtb="out/arch/arm64/boot/dtb.img"
 # Cek Gagal
 if [ ! -f "$kernel" ]; then
     tg_update "❌ **Anjir Gagal cok**
-Error opokih. Log e rametu jing"
+📄 Uploading build.log..."
+
+    curl -F document=@"$BUILD_LOG" \
+         -F chat_id="$TG_CHAT_ID" \
+         -F caption="❌ Build gagal cok" \
+         "https://api.telegram.org/bot$TG_TOKEN/sendDocument"
+
     exit 1
 fi
 
@@ -102,6 +113,12 @@ curl -F document=@"$ZIPNAME" \
 ⏱ **Durasi**: $DURATION
 👤 **User**: $KBUILD_BUILD_USER" \
      -F parse_mode="Markdown" \
+     "https://api.telegram.org/bot$TG_TOKEN/sendDocument"
+     
+# Upload build log
+curl -F document=@"$BUILD_LOG" \
+     -F chat_id="$TG_CHAT_ID" \
+     -F caption="📄 build.log berhasil dikompilasi" \
      "https://api.telegram.org/bot$TG_TOKEN/sendDocument"
 
 echo -e "\nSelesai!"
