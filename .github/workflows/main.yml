@@ -6,12 +6,34 @@ on:
       branch:
         description: "Branch"
         required: true
-        default: "A16"
+        default: "A15"
         type: choice
         options:
           - A15
-          
-          
+
+      repo:
+        description: "Kernel source repo"
+        required: true
+        default: "ZGSYet/NekoPoi-rebase"
+        type: choice
+        options:
+          - ZGSYet/NekoPoi-rebase
+          - custom
+
+      custom_repo:
+        description: "Kalau pilih 'custom' di atas, isi repo di sini (format: owner/repo)"
+        required: false
+        default: ""
+
+      use_ksu:
+        description: "Integrasikan KernelSU-Next?"
+        required: true
+        default: "No"
+        type: choice
+        options:
+          - "Yes"
+          - "No"
+
 jobs:
   build:
     name: Build Kernel
@@ -23,12 +45,26 @@ jobs:
           sudo apt update -y
           sudo apt install -y build-essential libncurses-dev bison flex libssl-dev libelf-dev dwarves bc rsync cpio python3 python3-pip git curl wget make lz4 zip unzip ccache
           sudo apt install -y fakeroot device-tree-compiler libdw-dev pkg-config lld llvm
-          
+
+      - name: 📥 Resolve Repo
+        id: resolve
+        run: |
+          if [ "${{ github.event.inputs.repo }}" = "custom" ]; then
+            echo "target_repo=${{ github.event.inputs.custom_repo }}" >> "$GITHUB_OUTPUT"
+          else
+            echo "target_repo=${{ github.event.inputs.repo }}" >> "$GITHUB_OUTPUT"
+          fi
+
       - name: 📥 Clone Kernel Source
         run: |
-          git clone --depth=1 -b ${{ github.event.inputs.branch }} https://github.com/ZGSYet/NekoPoi-rebase.git kernel
+          git clone --depth=1 -b ${{ github.event.inputs.branch }} https://github.com/${{ steps.resolve.outputs.target_repo }}.git kernel
+
+      - name: ⚡ Integrate KernelSU-Next
+        if: ${{ github.event.inputs.use_ksu == 'Yes' }}
+        working-directory: kernel
+        run: |
+          curl -LSs "https://raw.githubusercontent.com/Mr-Morat/KernelSU-Next/stable/kernel/setup.sh" | bash -s syscall
 
       - name: 🔨 Build
         working-directory: kernel
-        run: curl -LSs "https://raw.githubusercontent.com/Mr-Morat/KernelSU-Next/stable/kernel/setup.sh" | bash -s syscall && bash mk.sh
-        
+        run: bash mk.sh
