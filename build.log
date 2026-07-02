@@ -1,0 +1,14 @@
+make[1]: Entering directory '/tmp/ksu/out'
+  GEN     ./Makefile
+  HOSTCC  scripts/basic/fixdep
+  HOSTCC  scripts/kconfig/conf.o
+  HOSTCC  scripts/kconfig/zconf.tab.o
+  HOSTLD  scripts/kconfig/conf
+scripts/kconfig/conf  --silentoldconfig Kconfig
+drivers/input/touchscreen/focaltech_touch/Kconfig:5:warning: ignoring type redefinition of 'TOUCHSCREEN_FTS' from 'boolean' to 'tristate'
+drivers/Kconfig:228: can't open file "drivers/kernelsu/Kconfig"
+make[3]: *** [../scripts/kconfig/Makefile:40: silentoldconfig] Error 1
+make[2]: *** [../Makefile:581: silentoldconfig] Error 2
+make[1]: *** No rule to make target 'include/config/auto.conf', needed by 'include/config/kernel.release'.  Stop.
+make[1]: Leaving directory '/tmp/ksu/out'
+make: *** [Makefile:153: sub-make] Error 2
